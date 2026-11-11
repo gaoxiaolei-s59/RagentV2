@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: ragent-rag
+server:
+  port: ${SERVER_PORT:8080}
+
+# 基础服务由 imports 自动装配。启动时不访问模型；调用时使用以下地址和模型。
+ai:
+  providers:
+    ollama:
+      url: ${OLLAMA_BASE_URL:http://localhost:11434}
+      endpoints:
+        chat: /v1/chat/completions
+        embedding: /v1/embeddings
+  chat:
+    default-model: local-chat
+    candidates:
+      - id: local-chat
+        provider: ollama
+        model: ${OLLAMA_CHAT_MODEL:qwen3:8b}
+  embedding:
+    default-model: local-embedding
+    candidates:
+      - id: local-embedding
+        provider: ollama
+        model: ${OLLAMA_EMBEDDING_MODEL:nomic-embed-text}
+  rerank:
+    default-model: passthrough
+    candidates:
+      - id: passthrough
+        provider: noop

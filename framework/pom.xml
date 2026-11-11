@@ -56,7 +56,6 @@
         <dependency>
             <groupId>org.mybatis</groupId>
             <artifactId>mybatis-spring</artifactId>
-            <version>3.0.5</version>
             <optional>true</optional>
         </dependency>
         <dependency>
@@ -67,7 +66,6 @@
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-spring</artifactId>
-            <version>3.5.14</version>
             <optional>true</optional>
         </dependency>
         <dependency>

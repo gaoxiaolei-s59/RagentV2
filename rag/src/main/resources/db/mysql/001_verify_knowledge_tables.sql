@@ -1,0 +1,26 @@
+-- 只读检查表、字段、默认值、索引及约束。
+SELECT TABLE_NAME, ENGINE, TABLE_COLLATION, TABLE_COMMENT
+FROM information_schema.TABLES
+WHERE TABLE_SCHEMA = 'ragent'
+  AND TABLE_NAME IN ('knowledge_base', 'knowledge_document', 'knowledge_chunk')
+ORDER BY TABLE_NAME;
+
+SELECT TABLE_NAME, COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, COLUMN_DEFAULT, EXTRA
+FROM information_schema.COLUMNS
+WHERE TABLE_SCHEMA = 'ragent'
+  AND TABLE_NAME IN ('knowledge_base', 'knowledge_document', 'knowledge_chunk')
+ORDER BY TABLE_NAME, ORDINAL_POSITION;
+
+SELECT TABLE_NAME, INDEX_NAME, NON_UNIQUE,
+       GROUP_CONCAT(COLUMN_NAME ORDER BY SEQ_IN_INDEX) AS INDEX_COLUMNS
+FROM information_schema.STATISTICS
+WHERE TABLE_SCHEMA = 'ragent'
+  AND TABLE_NAME IN ('knowledge_base', 'knowledge_document', 'knowledge_chunk')
+GROUP BY TABLE_NAME, INDEX_NAME, NON_UNIQUE
+ORDER BY TABLE_NAME, INDEX_NAME;
+
+SELECT TABLE_NAME, CONSTRAINT_NAME, CONSTRAINT_TYPE
+FROM information_schema.TABLE_CONSTRAINTS
+WHERE TABLE_SCHEMA = 'ragent'
+  AND TABLE_NAME IN ('knowledge_base', 'knowledge_document', 'knowledge_chunk')
+ORDER BY TABLE_NAME, CONSTRAINT_NAME;

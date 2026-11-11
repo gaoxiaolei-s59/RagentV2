@@ -7,8 +7,9 @@
 | 根工程 | ragent-parent | 聚合构建、统一依赖版本与编译/测试插件 |
 | framework | ragent-framework | 公共 DTO、统一响应、异常处理、SSE、MyBatis-Plus 配置、MQ 接口 |
 | infra | ragent-infra | 模型客户端、聊天/Embedding/Rerank 路由、故障切换、健康状态、Token 估算 |
+| rag | ragent-rag | 可运行应用、模型能力接口、知识库管理及集成测试 |
 
-依赖方向为 `业务应用 → ragent-infra → ragent-framework`。只需要 Web/公共约定时，可以单独引入 framework。两个模块均为普通 JAR，不是可直接运行的 Spring Boot 应用。
+依赖方向为 `业务应用 → ragent-infra → ragent-framework`。只需要 Web/公共约定时，可以单独引入 framework。framework/infra 为普通基础库 JAR；rag 是可执行 Spring Boot 应用。
 
 ## 构建
 
@@ -147,12 +148,23 @@ flowchart LR
 
 `MessageQueueProducer`、`TransactionChecker` 目前只定义契约。消费应用使用 MQ 时须显式引入 RocketMQ 客户端及自己的生产者实现；引入本基础库不会自动连接 NameServer。Redis、鉴权拦截器和业务配置不在本次迁移范围内。
 
-数据库审计：没有新增表、SQL、Mapper、实体或配置表 DML，无需迁移 SQL。保留的填充处理器仅为实体已有的 `createTime`、`updateTime`、`delFlag`、`compressedFlag` 提供默认值；是否参与填充还取决于业务实体映射，不会创建这些字段。
+基础层迁移本身无需业务表变更。知识库业务使用 `ragent` 库的 `knowledge_base`、`knowledge_document`、`knowledge_chunk` 三张表，初始化脚本见 `rag/src/main/resources/db/mysql`；知识库 CRUD 复用这些表，无额外 DDL 或配置表 DML。保留的填充处理器仅为实体已有的 `createTime`、`updateTime`、`delFlag`、`compressedFlag` 提供默认值；是否参与填充还取决于业务实体映射，不会创建这些字段。
 
 ## 验证范围
 
-最终验证：`mvn -o clean verify` 成功，15 个测试通过（framework 5、infra 10），两个 JAR 均包含自动装配 imports。
+当前验证：`mvn -o -Dknowledge.mysql.test=true clean verify` 成功，38 个测试通过（framework 5、infra 10、rag 23，其中真实 MySQL 知识库测试 7 个）。默认构建跳过需要显式开启的 MySQL 集成测试。
 
 自动测试覆盖：独立自动发现、配置绑定、无数据源启动、有数据源装配、可选 MyBatis 类缺失、Web 异常处理及用户覆盖、服务覆盖、禁用开关、线程池关闭、同步/SSE 资源隔离、同 provider 自定义覆盖，以及首选模型失败后的切换和熔断。
 
-本地验证不访问真实模型、数据库、Redis 或 MQ。真实服务的鉴权、网络、模型响应协议及业务联调仍需在消费应用环境中验证。
+模型测试不访问真实模型、Redis 或 MQ；显式启用的知识库集成测试会连接本地 MySQL，并在事务结束后回滚测试数据。真实服务的鉴权、网络、模型响应协议及业务联调仍需在消费应用环境中验证。
+
+## Spring Boot 应用与跨模块测试
+
+`rag`（`ragent-rag`）提供标准 `RagApplication` 启动类，通过自动装配接入 framework/infra，无需跨模块扫描。执行 `mvn -pl rag -am clean package` 后可运行 `java -jar rag/target/ragent-rag-1.0-SNAPSHOT.jar`。
+
+运行 `mvn -pl rag -am test` 验证正式应用的自动装配及本地模型 HTTP 协议链路。启动、配置和接口示例见 [rag/README.md](rag/README.md)。
+
+
+## 知识库管理
+
+启用 `mysql` profile 后提供知识库创建、修改、逻辑删除、详情、分页及启用/禁用接口。默认连接本地 `ragent` 数据库，数据库环境变量和接口说明见 [rag/README.md](rag/README.md#知识库管理)。文档上传和 Chunk 管理尚未接入正式业务接口。
