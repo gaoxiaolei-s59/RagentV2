@@ -33,11 +33,17 @@ import java.util.Objects;
 @Profile("mysql")
 @RequiredArgsConstructor
 public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
-    /** 知识库配置读写及父记录行锁。 */
+    /**
+     * 知识库配置读写及父记录行锁。
+     */
     private final KnowledgeBaseMapper knowledgeBaseMapper;
-    /** 删除知识库时批量更新其文档的逻辑删除标记。 */
+    /**
+     * 删除知识库时批量更新其文档的逻辑删除标记。
+     */
     private final KnowledgeDocumentMapper knowledgeDocumentMapper;
-    /** 查询向量索引状态，并在删除知识库时处理所属切片。 */
+    /**
+     * 查询向量索引状态，并在删除知识库时处理所属切片。
+     */
     private final KnowledgeChunkMapper knowledgeChunkMapper;
 
     /**
@@ -69,7 +75,7 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
         String modelId = normalizeModelId(request.getEmbeddingModelId());
         // 成功建立的向量依赖原模型和维度，禁用切片同样需要保留此保护。
         boolean modelChanged = !Objects.equals(current.getEmbeddingModelId(), modelId)
-            || !Objects.equals(current.getEmbeddingDimension(), request.getEmbeddingDimension());
+                || !Objects.equals(current.getEmbeddingDimension(), request.getEmbeddingDimension());
         if (modelChanged && knowledgeChunkMapper.selectCount(Wrappers.<KnowledgeChunk>lambdaQuery()
                 .eq(KnowledgeChunk::getKnowledgeBaseId, id)
                 .eq(KnowledgeChunk::getVectorStatus, ChunkVectorStatus.READY)) > 0) {
@@ -77,14 +83,14 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
         }
         // 使用显式更新列，既支持清空可选字段，也避免实体默认值重置禁用状态。
         knowledgeBaseMapper.update(null, Wrappers.<KnowledgeBase>lambdaUpdate()
-            .eq(KnowledgeBase::getId, id)
-            .set(KnowledgeBase::getName, request.getName().trim())
-            .set(KnowledgeBase::getDescription, request.getDescription())
-            .set(KnowledgeBase::getEmbeddingModelId, modelId)
-            .set(KnowledgeBase::getEmbeddingDimension, request.getEmbeddingDimension())
-            .set(KnowledgeBase::getChunkSize, request.getChunkSize())
-            .set(KnowledgeBase::getChunkOverlap, request.getChunkOverlap())
-            .set(KnowledgeBase::getUpdateTime, new Date()));
+                .eq(KnowledgeBase::getId, id)
+                .set(KnowledgeBase::getName, request.getName().trim())
+                .set(KnowledgeBase::getDescription, request.getDescription())
+                .set(KnowledgeBase::getEmbeddingModelId, modelId)
+                .set(KnowledgeBase::getEmbeddingDimension, request.getEmbeddingDimension())
+                .set(KnowledgeBase::getChunkSize, request.getChunkSize())
+                .set(KnowledgeBase::getChunkOverlap, request.getChunkOverlap())
+                .set(KnowledgeBase::getUpdateTime, new Date()));
     }
 
     /**
@@ -98,13 +104,13 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
         Date now = new Date();
         // 只逻辑删除数据库记录。文件和向量的物理清理留待对应存储服务接入。
         knowledgeChunkMapper.update(null, Wrappers.<KnowledgeChunk>lambdaUpdate()
-            .eq(KnowledgeChunk::getKnowledgeBaseId, id)
-            .set(KnowledgeChunk::getDelFlag, 1)
-            .set(KnowledgeChunk::getUpdateTime, now));
+                .eq(KnowledgeChunk::getKnowledgeBaseId, id)
+                .set(KnowledgeChunk::getDelFlag, 1)
+                .set(KnowledgeChunk::getUpdateTime, now));
         knowledgeDocumentMapper.update(null, Wrappers.<KnowledgeDocument>lambdaUpdate()
-            .eq(KnowledgeDocument::getKnowledgeBaseId, id)
-            .set(KnowledgeDocument::getDelFlag, 1)
-            .set(KnowledgeDocument::getUpdateTime, now));
+                .eq(KnowledgeDocument::getKnowledgeBaseId, id)
+                .set(KnowledgeDocument::getDelFlag, 1)
+                .set(KnowledgeDocument::getUpdateTime, now));
         current.setUpdateTime(now);
         knowledgeBaseMapper.deleteById(current);
     }
@@ -129,14 +135,14 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
     @Override
     public KnowledgeBasePageVO page(KnowledgeBasePageRequest request) {
         var query = Wrappers.<KnowledgeBase>lambdaQuery()
-            .like(StringUtils.hasText(request.getName()), KnowledgeBase::getName,
-                request.getName() == null ? null : request.getName().trim())
-            .eq(request.getEnabled() != null, KnowledgeBase::getEnabled, request.getEnabled())
-            .orderByDesc(KnowledgeBase::getCreateTime, KnowledgeBase::getId);
+                .like(StringUtils.hasText(request.getName()), KnowledgeBase::getName,
+                        request.getName() == null ? null : request.getName().trim())
+                .eq(request.getEnabled() != null, KnowledgeBase::getEnabled, request.getEnabled())
+                .orderByDesc(KnowledgeBase::getCreateTime, KnowledgeBase::getId);
         Page<KnowledgeBase> page = knowledgeBaseMapper.selectPage(
-            new Page<>(request.getPageNum(), request.getPageSize()), query);
+                new Page<>(request.getPageNum(), request.getPageSize()), query);
         return new KnowledgeBasePageVO(page.getCurrent(), page.getSize(), page.getTotal(),
-            page.getRecords().stream().map(this::toVO).toList());
+                page.getRecords().stream().map(this::toVO).toList());
     }
 
     /**
@@ -149,9 +155,9 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
         requireForUpdate(id);
         // 不修改子记录自身的启用状态，避免恢复知识库时覆盖单独禁用的文档或切片。
         knowledgeBaseMapper.update(null, Wrappers.<KnowledgeBase>lambdaUpdate()
-            .eq(KnowledgeBase::getId, id)
-            .set(KnowledgeBase::getEnabled, enabled)
-            .set(KnowledgeBase::getUpdateTime, new Date()));
+                .eq(KnowledgeBase::getId, id)
+                .set(KnowledgeBase::getEnabled, enabled)
+                .set(KnowledgeBase::getUpdateTime, new Date()));
     }
 
     /**
@@ -199,7 +205,7 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
      */
     private KnowledgeBaseVO toVO(KnowledgeBase base) {
         return new KnowledgeBaseVO(base.getId().toString(), base.getName(), base.getDescription(),
-            base.getEmbeddingModelId(), base.getEmbeddingDimension(), base.getChunkSize(),
-            base.getChunkOverlap(), base.getEnabled(), base.getCreateTime(), base.getUpdateTime());
+                base.getEmbeddingModelId(), base.getEmbeddingDimension(), base.getChunkSize(),
+                base.getChunkOverlap(), base.getEnabled(), base.getCreateTime(), base.getUpdateTime());
     }
 }
