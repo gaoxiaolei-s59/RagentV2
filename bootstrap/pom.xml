@@ -13,6 +13,11 @@
     <dependencies>
         <dependency>
             <groupId>org.puregxl.ragent</groupId>
+            <artifactId>system</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.puregxl.ragent</groupId>
             <artifactId>ragent-rag</artifactId>
             <version>${project.version}</version>
         </dependency>

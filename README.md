@@ -14,6 +14,8 @@
 
 ## 构建
 
+项目通过 `.mvn/maven.config` 使用本项目的 `.mvn/settings.xml`，依赖仓库统一走 HTTPS Maven Central，避免其他项目的全局内网 HTTP 仓库配置影响此项目。不会修改用户全局 `~/.m2/settings.xml`。IDEA 应启用“使用 .mvn/maven.config 中的设置”，配置变更后执行“重新加载所有 Maven 项目”。
+
 Maven 必须使用 JDK 17。macOS 示例：
 
 ```bash

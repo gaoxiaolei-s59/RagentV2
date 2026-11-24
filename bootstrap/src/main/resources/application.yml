@@ -29,3 +29,12 @@ ai:
     candidates:
       - id: passthrough
         provider: noop
+
+# system 登录使用请求头 s-token；当前为内存会话，重启后需重新登录。
+sa-token:
+  token-name: s-token
+  timeout: 2592000
+  active-timeout: -1
+  is-read-header: true
+  is-read-cookie: false
+  is-read-body: false
