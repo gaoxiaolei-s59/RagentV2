@@ -1,6 +1,6 @@
 spring:
   application:
-    name: ragent-rag
+    name: ragent-bootstrap
 server:
   port: ${SERVER_PORT:8080}
 

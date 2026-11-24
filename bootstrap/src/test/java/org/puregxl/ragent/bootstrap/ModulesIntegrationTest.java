@@ -1,4 +1,4 @@
-package org.puregxl.ragent.rag;
+package org.puregxl.ragent.bootstrap;
 
 import com.google.gson.*;
 import org.puregxl.ragent.testfixture.TestErrorConfiguration;
@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** 从测试消费者的真实 HTTP 入口验证 framework → infra → 模型 HTTP 协议整条链路。 */
-@SpringBootTest(classes = RagApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+@SpringBootTest(classes = BootstrapApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
     properties = {"spring.main.banner-mode=off", "server.address=127.0.0.1", "ai.selection.failure-threshold=100",
         "logging.level.org.puregxl.ragent.infra.model.ModelRoutingExecutor=OFF",
         "logging.level.org.puregxl.ragent.framework.web.GlobalExceptionHandler=OFF"})

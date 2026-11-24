@@ -1,4 +1,4 @@
-package org.puregxl.ragent.rag;
+package org.puregxl.ragent.bootstrap;
 
 import com.google.gson.*;
 import com.sun.net.httpserver.HttpExchange;

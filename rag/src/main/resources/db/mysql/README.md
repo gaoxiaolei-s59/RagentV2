@@ -52,3 +52,5 @@
 - 外部依赖：本地 MySQL、RustFS S3 API；无模型调用、向量入库或自动解析任务。
 
 2026-11-24 验证：framework/infra/rag 的 `clean verify` 成功，共 52 个测试通过（上传业务单测 11 个、真实 RustFS/MySQL 联调 3 个）。可执行 JAR 已通过真实 multipart HTTP 上传，核对 RustFS 对象字节及 MySQL 已提交元数据；测试记录、对象和临时文件均已清理。无需新增表结构。
+
+启动模块调整：应用入口和两份 YAML 已统一迁入 `bootstrap`，真实 MySQL/RustFS 集成测试也在 `bootstrap/src/test`；业务实体、Mapper 和 SQL 继续由 rag 维护。该装配迁移不涉及 DDL、配置表 DML 或业务数据修改。

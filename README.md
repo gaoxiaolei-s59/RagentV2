@@ -7,9 +7,10 @@
 | 根工程 | ragent-parent | 聚合构建、统一依赖版本与编译/测试插件 |
 | framework | ragent-framework | 公共 DTO、统一响应、异常处理、SSE、MyBatis-Plus 配置、MQ 接口 |
 | infra | ragent-infra | 模型客户端、聊天/Embedding/Rerank 路由、故障切换、健康状态、Token 估算 |
-| rag | ragent-rag | 可运行应用、模型能力接口、知识库管理及集成测试 |
+| rag | ragent-rag | 普通业务 JAR，包含模型接口、知识库与文档上传 |
+| bootstrap | bootstrap | 唯一 Spring Boot 启动模块、YAML 配置、运行时驱动及应用集成测试 |
 
-依赖方向为 `业务应用 → ragent-infra → ragent-framework`。只需要 Web/公共约定时，可以单独引入 framework。framework/infra 为普通基础库 JAR；rag 是可执行 Spring Boot 应用。
+项目依赖方向为 `bootstrap → rag → infra → framework`。framework、infra、rag 均为普通 JAR，只有 bootstrap 打包为可执行 Spring Boot 应用。只需要 Web/公共约定时，其他应用仍可单独引入 framework。
 
 ## 构建
 
@@ -152,7 +153,7 @@ flowchart LR
 
 ## 验证范围
 
-当前验证：`mvn -o -pl rag -am -Dknowledge.mysql.test=true -Dknowledge.storage.test=true clean verify` 成功，52 个测试通过（framework 5、infra 10、rag 37，包含真实 MySQL 知识库测试 7 个、RustFS/MySQL 上传联调测试 3 个）。默认构建跳过需要显式开启的 MySQL 和 RustFS 集成测试。
+当前验证：`mvn -o -pl bootstrap -am -Dknowledge.mysql.test=true -Dknowledge.storage.test=true clean verify` 成功，52 个测试通过（framework 5、infra 10、rag 16、bootstrap 21，包含真实 MySQL 知识库测试 7 个、RustFS/MySQL 上传联调测试 3 个）。默认构建跳过需要显式开启的 MySQL 和 RustFS 集成测试。
 
 自动测试覆盖：独立自动发现、配置绑定、无数据源启动、有数据源装配、可选 MyBatis 类缺失、Web 异常处理及用户覆盖、服务覆盖、禁用开关、线程池关闭、同步/SSE 资源隔离、同 provider 自定义覆盖，以及首选模型失败后的切换和熔断。
 
@@ -160,11 +161,11 @@ flowchart LR
 
 ## Spring Boot 应用与跨模块测试
 
-`rag`（`ragent-rag`）提供标准 `RagApplication` 启动类，通过自动装配接入 framework/infra，无需跨模块扫描。执行 `mvn -pl rag -am clean package` 后可运行 `java -jar rag/target/ragent-rag-1.0-SNAPSHOT.jar`。
+`bootstrap` 提供唯一启动类 `org.puregxl.ragent.bootstrap.BootstrapApplication`，扫描 bootstrap 和 rag 业务包，framework/infra 通过自动装配接入。两个 YAML 均位于 `bootstrap/src/main/resources`，rag 仅提供普通业务 JAR。执行 `mvn -pl bootstrap -am clean package` 后运行 `java -jar bootstrap/target/bootstrap-1.0-SNAPSHOT.jar`；知识库和 RustFS 功能使用 `--spring.profiles.active=mysql`。
 
-运行 `mvn -pl rag -am test` 验证正式应用的自动装配及本地模型 HTTP 协议链路。启动、配置和接口示例见 [rag/README.md](rag/README.md)。
+运行 `mvn -pl bootstrap -am test` 验证正式应用的自动装配及本地模型 HTTP 协议链路。启动、配置和接口示例见 [bootstrap/README.md](bootstrap/README.md)。
 
 
 ## 知识库管理
 
-启用 `mysql` profile 后提供知识库创建、修改、逻辑删除、详情、分页及启用/禁用接口。默认连接本地 `ragent` 数据库，数据库环境变量和接口说明见 [rag/README.md](rag/README.md#知识库管理)。文档上传已接入 RustFS 和 MySQL，入口为 `/knowledge-base/{kb-id}/docs/upload`；自动解析、切分和 Chunk 管理尚未接入。
+启用 `mysql` profile 后提供知识库创建、修改、逻辑删除、详情、分页及启用/禁用接口。默认连接本地 `ragent` 数据库，数据库环境变量和接口说明见 [bootstrap/README.md](bootstrap/README.md#知识库管理)。文档上传已接入 RustFS 和 MySQL，入口为 `/knowledge-base/{kb-id}/docs/upload`；自动解析、切分和 Chunk 管理尚未接入。
