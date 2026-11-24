@@ -23,6 +23,7 @@
         <spring-boot.version>4.0.1</spring-boot.version>
         <mybatis-plus.version>3.5.14</mybatis-plus.version>
         <mybatis-spring.version>3.0.5</mybatis-spring.version>
+        <aws-sdk.version>2.40.2</aws-sdk.version>
     </properties>
 
 
@@ -34,6 +35,16 @@
                 <version>${spring-boot.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>software.amazon.awssdk</groupId>
+                <artifactId>s3</artifactId>
+                <version>${aws-sdk.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>software.amazon.awssdk</groupId>
+                <artifactId>url-connection-client</artifactId>
+                <version>${aws-sdk.version}</version>
             </dependency>
             <dependency>
                 <groupId>cn.hutool</groupId>

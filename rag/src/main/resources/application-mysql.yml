@@ -4,3 +4,17 @@ spring:
     url: ${MYSQL_URL:jdbc:mysql://127.0.0.1:3306/ragent?useSSL=false&allowPublicKeyRetrieval=true&characterEncoding=UTF-8&connectionTimeZone=Asia/Shanghai}
     username: ${MYSQL_USERNAME:root}
     password: ${MYSQL_PASSWORD:root}
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 51MB
+
+# 本地 Docker RustFS 默认账号；实际环境通过环境变量提供凭据。
+knowledge:
+  storage:
+    endpoint: ${RUSTFS_ENDPOINT:http://127.0.0.1:9000}
+    access-key: ${RUSTFS_ACCESS_KEY:rustfsadmin}
+    secret-key: ${RUSTFS_SECRET_KEY:rustfsadmin}
+    bucket: ${RUSTFS_BUCKET:ragent-documents}
+    region: ${RUSTFS_REGION:us-east-1}
+    max-file-size: 50MB

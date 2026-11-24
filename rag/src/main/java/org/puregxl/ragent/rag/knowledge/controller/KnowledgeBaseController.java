@@ -4,12 +4,12 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.puregxl.ragent.framework.convention.Result;
 import org.puregxl.ragent.framework.web.Results;
-import org.puregxl.ragent.rag.knowledge.dto.KnowledgeBaseEnabledRequest;
-import org.puregxl.ragent.rag.knowledge.dto.KnowledgeBasePageRequest;
-import org.puregxl.ragent.rag.knowledge.dto.KnowledgeBaseSaveRequest;
+import org.puregxl.ragent.rag.knowledge.dto.request.KnowledgeBaseEnabledRequest;
+import org.puregxl.ragent.rag.knowledge.dto.request.KnowledgeBasePageRequest;
+import org.puregxl.ragent.rag.knowledge.dto.request.KnowledgeBaseSaveRequest;
 import org.puregxl.ragent.rag.knowledge.service.KnowledgeBaseService;
-import org.puregxl.ragent.rag.knowledge.vo.KnowledgeBasePageVO;
-import org.puregxl.ragent.rag.knowledge.vo.KnowledgeBaseVO;
+import org.puregxl.ragent.rag.knowledge.dto.response.KnowledgeBasePageResponse;
+import org.puregxl.ragent.rag.knowledge.dto.response.KnowledgeBaseResponse;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Profile("mysql")
 public class KnowledgeBaseController {
+
     /** 知识库业务服务。 */
     private final KnowledgeBaseService knowledgeBaseService;
 
@@ -70,7 +71,7 @@ public class KnowledgeBaseController {
      * @return 知识库详情，不包含持久化实体中的删除标记
      */
     @GetMapping("/{id}")
-    public Result<KnowledgeBaseVO> detail(@PathVariable("id") Long id) {
+    public Result<KnowledgeBaseResponse> detail(@PathVariable("id") Long id) {
         return Results.success(knowledgeBaseService.detail(id));
     }
 
@@ -81,7 +82,7 @@ public class KnowledgeBaseController {
      * @return 分页记录和总条数，自动排除逻辑删除记录
      */
     @GetMapping
-    public Result<KnowledgeBasePageVO> page(@Valid @ModelAttribute KnowledgeBasePageRequest request) {
+    public Result<KnowledgeBasePageResponse> page(@Valid @ModelAttribute KnowledgeBasePageRequest request) {
         return Results.success(knowledgeBaseService.page(request));
     }
 

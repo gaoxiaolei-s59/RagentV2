@@ -4,8 +4,8 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
 import org.puregxl.ragent.framework.exception.ClientException;
-import org.puregxl.ragent.rag.knowledge.dto.KnowledgeBasePageRequest;
-import org.puregxl.ragent.rag.knowledge.dto.KnowledgeBaseSaveRequest;
+import org.puregxl.ragent.rag.knowledge.dto.request.KnowledgeBasePageRequest;
+import org.puregxl.ragent.rag.knowledge.dto.request.KnowledgeBaseSaveRequest;
 import org.puregxl.ragent.rag.knowledge.entity.KnowledgeBase;
 import org.puregxl.ragent.rag.knowledge.entity.KnowledgeChunk;
 import org.puregxl.ragent.rag.knowledge.entity.KnowledgeDocument;
@@ -14,8 +14,8 @@ import org.puregxl.ragent.rag.knowledge.mapper.KnowledgeBaseMapper;
 import org.puregxl.ragent.rag.knowledge.mapper.KnowledgeChunkMapper;
 import org.puregxl.ragent.rag.knowledge.mapper.KnowledgeDocumentMapper;
 import org.puregxl.ragent.rag.knowledge.service.KnowledgeBaseService;
-import org.puregxl.ragent.rag.knowledge.vo.KnowledgeBasePageVO;
-import org.puregxl.ragent.rag.knowledge.vo.KnowledgeBaseVO;
+import org.puregxl.ragent.rag.knowledge.dto.response.KnowledgeBasePageResponse;
+import org.puregxl.ragent.rag.knowledge.dto.response.KnowledgeBaseResponse;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -119,13 +119,13 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
      * {@inheritDoc}
      */
     @Override
-    public KnowledgeBaseVO detail(Long id) {
+    public KnowledgeBaseResponse detail(Long id) {
         validateId(id);
         KnowledgeBase base = knowledgeBaseMapper.selectById(id);
         if (base == null) {
             throw new ClientException("知识库不存在或已删除");
         }
-        return toVO(base);
+        return toResponse(base);
     }
 
     /**
@@ -133,7 +133,7 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
      * <p>创建时间相同时以雪花 ID 排序，保证相同查询条件下分页顺序稳定。</p>
      */
     @Override
-    public KnowledgeBasePageVO page(KnowledgeBasePageRequest request) {
+    public KnowledgeBasePageResponse page(KnowledgeBasePageRequest request) {
         var query = Wrappers.<KnowledgeBase>lambdaQuery()
                 .like(StringUtils.hasText(request.getName()), KnowledgeBase::getName,
                         request.getName() == null ? null : request.getName().trim())
@@ -141,8 +141,8 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
                 .orderByDesc(KnowledgeBase::getCreateTime, KnowledgeBase::getId);
         Page<KnowledgeBase> page = knowledgeBaseMapper.selectPage(
                 new Page<>(request.getPageNum(), request.getPageSize()), query);
-        return new KnowledgeBasePageVO(page.getCurrent(), page.getSize(), page.getTotal(),
-                page.getRecords().stream().map(this::toVO).toList());
+        return new KnowledgeBasePageResponse(page.getCurrent(), page.getSize(), page.getTotal(),
+                page.getRecords().stream().map(this::toResponse).toList());
     }
 
     /**
@@ -203,8 +203,8 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
      * @param base 数据库中的知识库记录
      * @return 详情及列表共用的展示对象
      */
-    private KnowledgeBaseVO toVO(KnowledgeBase base) {
-        return new KnowledgeBaseVO(base.getId().toString(), base.getName(), base.getDescription(),
+    private KnowledgeBaseResponse toResponse(KnowledgeBase base) {
+        return new KnowledgeBaseResponse(base.getId().toString(), base.getName(), base.getDescription(),
                 base.getEmbeddingModelId(), base.getEmbeddingDimension(), base.getChunkSize(),
                 base.getChunkOverlap(), base.getEnabled(), base.getCreateTime(), base.getUpdateTime());
     }

@@ -1,6 +1,6 @@
 # RAG Spring Boot 应用
 
-`rag` 是可运行的 Spring Boot 4.0.1 / Java 17 应用，artifactId 为 `ragent-rag`，用于接入并验证 framework/infra 的基础能力。当前提供模型能力接口、知识库管理接口，文档上传仅有 test demo，尚未包含完整切分及向量检索流程。
+`rag` 是可运行的 Spring Boot 4.0.1 / Java 17 应用，artifactId 为 `ragent-rag`，用于接入并验证 framework/infra 的基础能力。当前提供模型能力接口、知识库管理接口，文档上传已接入本地 RustFS，尚未包含完整切分及向量检索流程。
 
 ## 自动装配
 
@@ -121,3 +121,62 @@ mvn -pl rag -am -Dtest=KnowledgeBaseMysqlIntegrationTest \
 ```
 
 测试事务自动回滚，不保留测试记录。默认构建跳过该测试，继续使用本地模拟模型测试；全量包含 MySQL 验证可执行 `mvn -Dknowledge.mysql.test=true clean verify`。
+
+## 文档上传（RustFS）
+
+现有 `KnowledgeChunkController` 的上传方法已实现，调用链为 `Controller → KnowledgeDocumentService → KnowledgeDocumentServiceImpl → RustFS / Mapper`。接口地址为：
+
+```text
+POST /knowledge-base/{kb-id}/docs/upload
+Content-Type: multipart/form-data
+```
+
+先启动已有 Docker 容器并运行 mysql profile 应用：
+
+```bash
+docker start rustfs local-mysql
+java -jar rag/target/ragent-rag-1.0-SNAPSHOT.jar --spring.profiles.active=mysql
+```
+
+先创建并取得知识库 ID，再上传文件（替换 ID 和本地文件路径）：
+
+```bash
+curl -X POST http://localhost:8080/knowledge-base/你的知识库ID/docs/upload \
+  -F 'file=@/absolute/path/example.txt' \
+  -F 'name=示例文档' \
+  -F 'chunkSize=800' \
+  -F 'chunkOverlap=100'
+```
+
+`file` 必填；`name`、`chunkSize`、`chunkOverlap` 可选。未传名称时使用原文件名，未传切分参数时继承知识库配置。默认允许 txt、md、pdf、doc、docx、xls、xlsx、ppt、pptx、csv，限制单文件 50MB；格式支持仅表示可以保存原文件，不代表已经实现对应解析器。
+
+返回 `Result<KnowledgeDocumentResponse>`，包含字符串文档 ID、知识库 ID、文件信息、SHA-256、对象 key、实际切分参数及时间。上传后文档状态为 `PENDING`，本次不自动解析、切分或向量化。
+
+RustFS 配置位于 `application-mysql.yml`：
+
+| 环境变量 | 本地默认值 | 用途 |
+| --- | --- | --- |
+| `RUSTFS_ENDPOINT` | `http://127.0.0.1:9000` | S3 API 地址，控制台通常使用 9001 |
+| `RUSTFS_ACCESS_KEY` | `rustfsadmin` | 本地开发访问账号 |
+| `RUSTFS_SECRET_KEY` | `rustfsadmin` | 本地开发密钥 |
+| `RUSTFS_BUCKET` | `ragent-documents` | 保存原文件的桶 |
+| `RUSTFS_REGION` | `us-east-1` | S3 签名区域 |
+
+通过官方 AWS Java SDK v2 使用 path-style 访问 RustFS。仅在上传时检查桶是否存在，不存在时创建，不开启公开访问；启动应用不访问 RustFS。账号和密钥使用环境变量覆盖，不将真实凭据写入代码。数据库保存桶内对象 key，更换桶时需要同步迁移原文件。
+
+业务处理：校验知识库和文件 → 流式临时文件及 SHA-256 → 上传唯一对象 key → 短事务内重新锁定并检查知识库 → 保存文档记录。数据库写入或提交失败时尝试删除本次对象，补偿失败会保留原始异常并记录待清理 key。临时文件在结束时清理。这里是跨系统的尽力补偿，不是 MySQL 与对象存储的分布式事务。
+
+真实 MySQL + RustFS 联调测试会上传、读回并校验对象内容，然后清理仅由测试创建的记录和对象，保留桶及已有业务数据：
+
+```bash
+mvn -pl rag -am -Dtest=KnowledgeDocumentRustFsIntegrationTest \
+  -Dsurefire.failIfNoSpecifiedTests=false -Dknowledge.storage.test=true test
+```
+
+包含两组真实数据库测试的全项目验证：
+
+```bash
+mvn -Dknowledge.mysql.test=true -Dknowledge.storage.test=true clean verify
+```
+
+普通构建无需启动 MySQL/RustFS，会跳过这两组显式开启的外部服务测试。

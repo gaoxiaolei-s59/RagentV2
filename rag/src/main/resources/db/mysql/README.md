@@ -18,7 +18,7 @@
 
 ## 数据库变更审计
 
-- 范围：三层实体和表结构，以及知识库 CRUD、分页和启用/禁用。上传仅有 test demo，文档/Chunk CRUD、切分和向量入库尚未实现。
+- 范围：三层实体和表结构，以及知识库 CRUD、分页和启用/禁用。文档上传已接入 RustFS 和 MySQL；其余文档/Chunk CRUD、切分和向量入库尚未实现。
 - DDL：新增三张表，包含主键、分页/状态/文件校验值索引、字段检查约束和父子外键。
 - 知识库管理的既有表依赖：`knowledge_base` 读写基本配置与启用状态；`knowledge_document`、`knowledge_chunk` 按知识库 ID 级联写入 `del_flag`、`update_time`；`knowledge_chunk.vector_status` 用于模型修改保护。本轮无需新增 DDL。
 - 序列：无，ID 由应用生成。
@@ -38,3 +38,17 @@
 实体阶段的完整构建曾被未完成的 Controller 阻断；知识库管理实现后该问题已解决。JDK 17 执行 `mvn -o -Dknowledge.mysql.test=true clean verify`，38 个测试全部通过，其中知识库真实 MySQL 集成测试 7 个。测试事务全部回滚，三张表均未留下测试业务数据。
 
 可执行 JAR 以 `mysql` profile 启动后，已使用真实 HTTP 验证知识库创建、详情、修改、禁用、分页和删除；临时验证记录已清理，验证应用已停止。
+
+
+## 文档上传数据库变更审计
+
+- 结论：本轮无新增 DDL、序列或配置表 DML，复用三张表；无需执行新的数据库迁移。
+- 代码范围：`KnowledgeChunkController`、`KnowledgeDocumentServiceImpl`、`KnowledgeDocumentMapper`。
+- `knowledge_base`：读取名称、启用/删除状态、切分配置；最终保存时按 ID 锁定未删除记录并再次校验启用状态。
+- `knowledge_document`：插入 id、knowledge_base_id、name、original_filename、file_extension、content_type、file_size、storage_key、sha256、process_status、chunk_size、chunk_overlap、enabled、del_flag、create_time、update_time；error_message 初始为空。字段均来自已有建表脚本。
+- `knowledge_chunk`：上传不创建切片，不读写该表；状态 PENDING 等待后续解析流程。
+- 测试数据：真实联调用例按每次创建的知识库 ID 隔离；结束后删除其文档对象和父子测试记录，不清空既有表或桶。
+- 验证 SQL：继续使用同目录 `001_verify_knowledge_tables.sql`。本次没有额外回滚 SQL；若仅回退上传代码，不需要删除原有业务表或文件。
+- 外部依赖：本地 MySQL、RustFS S3 API；无模型调用、向量入库或自动解析任务。
+
+2026-11-24 验证：framework/infra/rag 的 `clean verify` 成功，共 52 个测试通过（上传业务单测 11 个、真实 RustFS/MySQL 联调 3 个）。可执行 JAR 已通过真实 multipart HTTP 上传，核对 RustFS 对象字节及 MySQL 已提交元数据；测试记录、对象和临时文件均已清理。无需新增表结构。

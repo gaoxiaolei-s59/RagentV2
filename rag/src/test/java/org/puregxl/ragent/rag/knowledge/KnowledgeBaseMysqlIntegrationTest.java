@@ -9,8 +9,8 @@ import org.puregxl.ragent.framework.exception.ClientException;
 import org.puregxl.ragent.framework.web.GlobalExceptionHandler;
 import org.puregxl.ragent.rag.knowledge.config.KnowledgeDataSourceConfiguration;
 import org.puregxl.ragent.rag.knowledge.controller.KnowledgeBaseController;
-import org.puregxl.ragent.rag.knowledge.dto.KnowledgeBasePageRequest;
-import org.puregxl.ragent.rag.knowledge.dto.KnowledgeBaseSaveRequest;
+import org.puregxl.ragent.rag.knowledge.dto.request.KnowledgeBasePageRequest;
+import org.puregxl.ragent.rag.knowledge.dto.request.KnowledgeBaseSaveRequest;
 import org.puregxl.ragent.rag.knowledge.service.KnowledgeBaseService;
 import org.puregxl.ragent.rag.knowledge.service.impl.KnowledgeBaseServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,12 +74,12 @@ class KnowledgeBaseMysqlIntegrationTest {
         update.setChunkSize(600);
         service.update(id, update);
         var result = service.detail(id);
-        assertThat(result.name()).isEqualTo("新名称");
-        assertThat(result.enabled()).isFalse();
-        assertThat(result.description()).isNull();
-        assertThat(result.embeddingModelId()).isNull();
-        assertThat(result.embeddingDimension()).isNull();
-        assertThat(result.chunkSize()).isEqualTo(600);
+        assertThat(result.getName()).isEqualTo("新名称");
+        assertThat(result.getEnabled()).isFalse();
+        assertThat(result.getDescription()).isNull();
+        assertThat(result.getEmbeddingModelId()).isNull();
+        assertThat(result.getEmbeddingDimension()).isNull();
+        assertThat(result.getChunkSize()).isEqualTo(600);
     }
 
     @Test
@@ -97,7 +97,7 @@ class KnowledgeBaseMysqlIntegrationTest {
         mvc.perform(patch("/knowledge-base/{id}/enabled", id).contentType("application/json")
                 .content("{\"enabled\":true}"))
             .andExpect(jsonPath("$.code").value("0"));
-        assertThat(service.detail(id).enabled()).isTrue();
+        assertThat(service.detail(id).getEnabled()).isTrue();
         mvc.perform(delete("/knowledge-base/{id}", id)).andExpect(jsonPath("$.code").value("0"));
         mvc.perform(get("/knowledge-base/{id}", id))
             .andExpect(jsonPath("$.code").value("A000001"))
@@ -118,8 +118,8 @@ class KnowledgeBaseMysqlIntegrationTest {
             .andExpect(jsonPath("$.data.records[0].id").value(disabled.toString()));
         KnowledgeBasePageRequest page = new KnowledgeBasePageRequest();
         page.setName(prefix); page.setPageNum(2); page.setPageSize(1);
-        assertThat(service.page(page).records()).hasSize(1);
-        assertThat(service.page(page).total()).isEqualTo(2);
+        assertThat(service.page(page).getRecords()).hasSize(1);
+        assertThat(service.page(page).getTotal()).isEqualTo(2);
     }
 
     @Test
@@ -136,7 +136,7 @@ class KnowledgeBaseMysqlIntegrationTest {
         assertThatThrownBy(() -> service.detail(id)).isInstanceOf(ClientException.class)
             .hasMessageContaining("知识库不存在");
         KnowledgeBasePageRequest page = new KnowledgeBasePageRequest(); page.setName("级联删除测试");
-        assertThat(service.page(page).records()).noneMatch(item -> item.id().equals(id.toString()));
+        assertThat(service.page(page).getRecords()).noneMatch(item -> item.getId().equals(id.toString()));
     }
 
     @Test
@@ -146,7 +146,7 @@ class KnowledgeBaseMysqlIntegrationTest {
         KnowledgeBaseSaveRequest changed = request("模型配置保护测试"); changed.setEmbeddingModelId("other");
         assertThatThrownBy(() -> service.update(id, changed)).isInstanceOf(ClientException.class)
             .hasMessageContaining("重建");
-        assertThat(service.detail(id).embeddingModelId()).isEqualTo("local-embedding");
+        assertThat(service.detail(id).getEmbeddingModelId()).isEqualTo("local-embedding");
     }
 
     @Test

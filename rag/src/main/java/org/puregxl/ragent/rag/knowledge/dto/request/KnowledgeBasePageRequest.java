@@ -1,4 +1,4 @@
-package org.puregxl.ragent.rag.knowledge.dto;
+package org.puregxl.ragent.rag.knowledge.dto.request;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;

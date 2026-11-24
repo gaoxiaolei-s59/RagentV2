@@ -152,7 +152,7 @@ flowchart LR
 
 ## 验证范围
 
-当前验证：`mvn -o -Dknowledge.mysql.test=true clean verify` 成功，38 个测试通过（framework 5、infra 10、rag 23，其中真实 MySQL 知识库测试 7 个）。默认构建跳过需要显式开启的 MySQL 集成测试。
+当前验证：`mvn -o -pl rag -am -Dknowledge.mysql.test=true -Dknowledge.storage.test=true clean verify` 成功，52 个测试通过（framework 5、infra 10、rag 37，包含真实 MySQL 知识库测试 7 个、RustFS/MySQL 上传联调测试 3 个）。默认构建跳过需要显式开启的 MySQL 和 RustFS 集成测试。
 
 自动测试覆盖：独立自动发现、配置绑定、无数据源启动、有数据源装配、可选 MyBatis 类缺失、Web 异常处理及用户覆盖、服务覆盖、禁用开关、线程池关闭、同步/SSE 资源隔离、同 provider 自定义覆盖，以及首选模型失败后的切换和熔断。
 
@@ -167,4 +167,4 @@ flowchart LR
 
 ## 知识库管理
 
-启用 `mysql` profile 后提供知识库创建、修改、逻辑删除、详情、分页及启用/禁用接口。默认连接本地 `ragent` 数据库，数据库环境变量和接口说明见 [rag/README.md](rag/README.md#知识库管理)。文档上传和 Chunk 管理尚未接入正式业务接口。
+启用 `mysql` profile 后提供知识库创建、修改、逻辑删除、详情、分页及启用/禁用接口。默认连接本地 `ragent` 数据库，数据库环境变量和接口说明见 [rag/README.md](rag/README.md#知识库管理)。文档上传已接入 RustFS 和 MySQL，入口为 `/knowledge-base/{kb-id}/docs/upload`；自动解析、切分和 Chunk 管理尚未接入。
